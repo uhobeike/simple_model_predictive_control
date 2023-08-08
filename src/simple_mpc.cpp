@@ -1,13 +1,19 @@
 #include "ceres/ceres.h"
 #include "glog/logging.h"
 
+#include <sciplot/sciplot.hpp>
+
+#include <chrono>
 #include <numeric>
+#include <thread>
 
 using ceres::AutoDiffCostFunction;
 using ceres::CostFunction;
 using ceres::Problem;
 using ceres::Solve;
 using ceres::Solver;
+
+using namespace sciplot;
 
 const int N = 20;
 const double dt = 0.1;
@@ -111,6 +117,29 @@ int main(int argc, char ** argv)
   std::cout << " omega: ";
   for (auto omega : w_out) std::cout << omega << ", ";
   std::cout << "\n";
+
+  Plot2D plot;
+  plot.fontName("Palatino");
+  plot.xlabel("x").fontSize(20);
+  plot.ylabel("y").fontSize(20);
+  plot.legend().atTop().fontSize(20).displayHorizontal().displayExpandWidthBy(2);
+  plot.grid().show();
+
+  std::vector<double> x;
+  std::vector<double> y;
+  double cnt = 0;
+  for (int i = 0; i <= 100; ++i) {
+    x.push_back(static_cast<double>(cnt));
+    y.push_back(std::sin(cnt));
+    cnt += (6.28 / 100);
+  }
+
+  plot.drawCurve(x, y).label("path").lineColor("green");
+
+  Figure fig = {{plot}};
+  Canvas canvas = {{fig}};
+  canvas.size(1000, 1000);
+  canvas.show();
 
   return 0;
 }

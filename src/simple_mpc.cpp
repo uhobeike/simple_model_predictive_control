@@ -4,7 +4,6 @@
 #include <sciplot/sciplot.hpp>
 
 #include <chrono>
-#include <numeric>
 #include <thread>
 
 using ceres::AutoDiffCostFunction;
@@ -15,7 +14,7 @@ using ceres::Solver;
 
 using namespace sciplot;
 
-const int N = 40;
+const int predictive_horizon_num = 40;
 const double dt = 1;
 
 std::vector<double> path_x;
@@ -31,37 +30,21 @@ struct ObjectiveFunction
   template <typename T>
   bool operator()(const T * const v, const T * const w, T * residual) const
   {
-    std::vector<T> xs(N + 1, (T)0.0);
-    std::vector<T> ys(N + 1, (T)0.0);
-    std::vector<T> ths(N + 1, (T)0.0);
+    std::vector<T> xs(predictive_horizon_num + 1, (T)0.0);
+    std::vector<T> ys(predictive_horizon_num + 1, (T)0.0);
+    std::vector<T> ths(predictive_horizon_num + 1, (T)0.0);
 
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < predictive_horizon_num; i++) {
       // clang-format off
-      // if (w[i] >= (T)1.0e-100) {
-        // x =
-        //     xs[i] + 
-        //       (v[i] / w[i]) * 
-        //         (sin(ths[i] + w[i] * dt_) - sin(ths[i]));
-        // y = 
-        //     ys[i] +
-        //       (v[i] / w[i]) * 
-        //         ((T)-1.0 * cos(ths[i] + w[i] * dt_) + cos(ths[i]));
-        // th = 
-        //     ths[i] + 
-        //       w[i] * dt_;
-      // }
-      // if(w[i] <= (T)1.0e-100) {
-      T  x =
+      T x =
             xs[i] + 
               v[i] * cos(ths[i]);
-      T  y = 
+      T y = 
             ys[i] +
               v[i] * sin(ths[i]);
-      T  th = 
+      T th = 
             ths[i] + 
               w[i] * dt_;
-      // }
-
       // clang-format on
 
       T cost = pow((path_x_[i] - x), 2) + pow((path_y_[i] - y), 2);
@@ -70,13 +53,8 @@ struct ObjectiveFunction
       ys[i + 1] = y;
       ths[i + 1] = th;
 
-      // cost += cost;
-
       residual[i] = cost;
     }
-
-    // residual[0] = accumulate(costs.begin(), costs.end(), (T)0.0);
-    // residual[0] = cost;
 
     return true;
   }
@@ -97,17 +75,19 @@ int main(int argc, char ** argv)
     path_y.push_back(sin(x / 10));
   }
 
-  std::vector<double> v_in(N, 0.0);
-  std::vector<double> w_in(N, 0.0);
+  std::vector<double> v_in(predictive_horizon_num, 0.0);
+  std::vector<double> w_in(predictive_horizon_num, 0.0);
   auto v_out = v_in;
   auto w_out = w_in;
 
   Problem problem;
   problem.AddResidualBlock(
-    new AutoDiffCostFunction<ObjectiveFunction, N, N, N>(new ObjectiveFunction(dt, path_x, path_y)),
+    new AutoDiffCostFunction<
+      ObjectiveFunction, predictive_horizon_num, predictive_horizon_num, predictive_horizon_num>(
+      new ObjectiveFunction(dt, path_x, path_y)),
     nullptr, v_out.data(), w_out.data());
-  for (int i = 0; i < N; ++i) {
-    problem.SetParameterLowerBound(v_out.data(), i, 1.0e-10);
+  for (int i = 0; i < predictive_horizon_num; ++i) {
+    problem.SetParameterLowerBound(v_out.data(), i, 0.0);
     problem.SetParameterLowerBound(w_out.data(), i, -3.14);
     problem.SetParameterUpperBound(v_out.data(), i, 1.0);
     problem.SetParameterUpperBound(w_out.data(), i, 3.14);
@@ -143,28 +123,17 @@ int main(int argc, char ** argv)
   predictive_horizon_y.push_back((double)0.0);
   ths.push_back((double)0.0);
 
-  for (int i = 0; i < N; i++) {
+  for (int i = 0; i < predictive_horizon_num; i++) {
     // clang-format off
-      // double x =
-      //     predictive_horizon_x[i] + 
-      //       (v_out[i] / w_out[i]) * 
-      //         (sin(ths[i] + w_out[i] * dt) - sin(ths[i])) ;
-      // double y = 
-      //     predictive_horizon_y[i] +
-      //       (v_out[i] / w_out[i]) * 
-      //         (-1.0 * cos(ths[i] + w_out[i] * dt) + cos(ths[i]));
-      // double th = 
-      //     ths[i] + 
-      //       w_out[i] * dt;
-      double  x =
-            predictive_horizon_x[i] + 
-              v_out[i] * cos(ths[i]);
-      double  y = 
-            predictive_horizon_y[i] +
-              v_out[i] * sin(ths[i]);
-      double  th = 
-            ths[i] + 
-              w_out[i] * dt;
+    double  x =
+          predictive_horizon_x[i] + 
+            v_out[i] * cos(ths[i]);
+    double  y = 
+          predictive_horizon_y[i] +
+            v_out[i] * sin(ths[i]);
+    double  th = 
+          ths[i] + 
+            w_out[i] * dt;
     // clang-format on
 
     predictive_horizon_x.push_back(x);
@@ -179,14 +148,17 @@ int main(int argc, char ** argv)
   plot.legend().atTop().fontSize(20).displayHorizontal().displayExpandWidthBy(2);
   plot.grid().show();
 
+  std::string predictive_horizon_label = "Predictive Horizon";
+  predictive_horizon_label =
+    predictive_horizon_label + " N=" + std::to_string(predictive_horizon_num);
   plot.drawCurve(path_x, path_y).label("Path").lineColor("green");
-  plot.drawCurve(predictive_horizon_x, predictive_horizon_y)
-    .label("Predictive Horizon")
+  plot.drawCurveWithPoints(predictive_horizon_x, predictive_horizon_y)
+    .label(predictive_horizon_label)
     .lineColor("red");
 
   Figure fig = {{plot}};
   Canvas canvas = {{fig}};
-  canvas.size(1000, 1000);
+  canvas.size(1200, 800);
   canvas.show();
 
   return 0;

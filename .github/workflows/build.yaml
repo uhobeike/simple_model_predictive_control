@@ -1,0 +1,24 @@
+name: build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: apt install
+      run: |
+        sudo apt update -y
+        sudo apt install -y libunwind-dev
+        sudo apt install -y cmake gnuplot libgoogle-glog-dev libeigen3-dev libceres-dev
+    - name: build
+      run: |
+        mkdir build && cd build
+        cmake .. && make

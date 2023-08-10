@@ -18,7 +18,7 @@ cmake .. && make && cd -
 ## Run
 
 ```
-./simple_model_predictive_control/build/simple_mpc
+./build/simple_mpc
 ```
 
 ### Result

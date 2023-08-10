@@ -1,9 +1,5 @@
 #include "simple_model_predictive_control/simple_mpc.hpp"
 
-#include "ceres/ceres.h"
-#include "glog/logging.h"
-
-// using ceres::AutoDiffCostFunction;
 using ceres::CostFunction;
 using ceres::DynamicAutoDiffCostFunction;
 using ceres::Problem;

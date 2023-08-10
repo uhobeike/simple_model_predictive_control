@@ -1,4 +1,4 @@
-# simple_model_predictive_control
+# simple_model_predictive_control [![build](https://github.com/uhobeike/simple_model_predictive_control/actions/workflows/build.yaml/badge.svg)](https://github.com/uhobeike/simple_model_predictive_control/actions/workflows/build.yaml)
 
 ## Overview
 単純なモデル予測制御を実装しました。  
@@ -12,7 +12,7 @@ sudo apt install cmake gnuplot libgoogle-glog-dev libeigen3-dev libceres-dev
 git clone git@github.com:uhobeike/simple_model_predictive_control.git
 cd simple_model_predictive_control
 mkdir build && cd build
-cmake .. && make
+cmake .. && make && cd -
 ```
 
 ## Run

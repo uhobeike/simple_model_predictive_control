@@ -3,7 +3,7 @@
 ## Overview
 単純なモデル予測制御を実装しました。  
 予測モデルは、差動二輪ロボットをベースにしています。  
-最適化のソルバーは、[ceres-solver/ceres-solver](https://github.com/ceres-solver/ceres-solver/tree/master)を使用しています。
+最適化のためのソルバーは、[ceres-solver/ceres-solver](https://github.com/ceres-solver/ceres-solver/tree/master)を使用しています。
 
 ## Install & Build
 
